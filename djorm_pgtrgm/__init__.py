@@ -40,24 +40,19 @@ def monkey_get_db_prep_lookup(cls):
             monkey_get_db_prep_lookup(new_cls)
 
 
-backend_allowed = reduce(
-    lambda x, y: x in backend.__name__ or y, db_backends_allowed)
+if isinstance(QUERY_TERMS, set):
+    QUERY_TERMS.add('similar')
+else:
+    QUERY_TERMS['similar'] = None
 
-if backend_allowed:
+connection.operators['similar'] = "%%%% %s"
 
-    if isinstance(QUERY_TERMS, set):
-        QUERY_TERMS.add('similar')
-    else:
-        QUERY_TERMS['similar'] = None
+NEW_LOOKUP_TYPE = ('similar', )
 
-    connection.operators['similar'] = "%%%% %s"
-
-    NEW_LOOKUP_TYPE = ('similar', )
-
-    monkey_get_db_prep_lookup(Field)
-    if hasattr(Field, 'get_prep_lookup'):
-        Field.get_prep_lookup_origin = Field.get_prep_lookup
-        Field.get_prep_lookup = get_prep_lookup
+monkey_get_db_prep_lookup(Field)
+if hasattr(Field, 'get_prep_lookup'):
+    Field.get_prep_lookup_origin = Field.get_prep_lookup
+    Field.get_prep_lookup = get_prep_lookup
 
 
 class SimilarQuerySet(QuerySet):
